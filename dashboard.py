@@ -80,13 +80,53 @@ if st.button("最新データで分析開始"):
                 st.write(f"ステータス: {train_msg}")
 
             with col2:
-                st.subheader("📊 価格とニュース感情スコアの推移")
+                st.subheader("📊 S&P 500 市場チャート")
+                
+                # チャートの作成
+                fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+                # 1. ローソク足チャート（株価データ単体を使用）
+                fig.add_trace(
+                    go.Candlestick(
+                        x=stock_data.index,
+                        open=stock_data['Open'],
+                        high=stock_data['High'],
+                        low=stock_data['Low'],
+                        close=stock_data['Close'],
+                        name="S&P 500 価格"
+                    ),
+                    secondary_y=False
+                )
+
+                # 2. 感情スコアの棒グラフ（データがある場合のみ重ねる）
                 if not df.empty:
-                    fig = make_subplots(specs=[[{"secondary_y": True}]])
-                    fig.add_trace(go.Scatter(x=df['date'], y=df['Close'], name="S&P 500 価格"), secondary_y=False)
-                    fig.add_trace(go.Bar(x=df['date'], y=df['sentiment_score'], name="感情スコア", opacity=0.3), secondary_y=True)
-                    fig.update_layout(title_text="価格とニュースの相関")
-                    st.plotly_chart(fig, use_container_width=True)
+                    fig.add_trace(
+                        go.Bar(
+                            x=df['date'],
+                            y=df['sentiment_score'],
+                            name="ニュース感情スコア",
+                            marker_color="rgba(100, 200, 100, 0.4)",
+                            hovertemplate="日付: %{x}<br>スコア: %{y:.2f}"
+                        ),
+                        secondary_y=True
+                    )
+
+                # レイアウト調整
+                fig.update_layout(
+                    title="価格推移とニュース感情の相関",
+                    xaxis_title="日付",
+                    yaxis_title="価格 (USD)",
+                    yaxis2_title="感情スコア",
+                    xaxis_rangeslider_visible=False,
+                    template="plotly_dark",
+                    height=500,
+                    margin=dict(l=20, r=20, t=40, b=20)
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+
+                if df.empty:
+                    st.caption("※現在は週末のため、ニュース感情スコアとの重なり（棒グラフ）は表示されていません。月曜日以降に表示されます。")
 
             st.subheader("📰 最新の感情スコア（日次平均）")
             st.dataframe(sentiment_data.sort_values("date", ascending=False), use_container_width=True)
