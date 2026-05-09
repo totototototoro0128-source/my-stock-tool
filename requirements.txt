@@ -1,0 +1,9 @@
+yfinance
+pandas
+requests
+scikit-learn
+python-dotenv
+streamlit
+plotly
+gspread
+google-auth
